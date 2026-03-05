@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD de Tareas</title>
+
+    <style>
+        body {
+            background: #d8ecff; 
+            font-family: Arial;
+            text-align: center;
+        }
+
+        .caja {
+            background: white;
+            width: 300px;
+            margin: auto;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #a9d3ff;
+        }
+
+        input {
+            width: 180px;
+            padding: 5px;
+            border: 1px solid #99c9ff;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 5px 10px;
+            margin: 3px;
+            background: #a9d3ff;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .tarea {
+            background: #e5f2ff;
+            margin-top: 8px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #bcdfff;
+        }
+
+        .btn-peq {
+            padding: 2px 6px;
+            margin-left: 5px;
+            background: #99c9ff;
+            border: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CRUD de Tareas</h1>
+
+    <div class="caja">
+        <input type="text" id="texto" placeholder="Escribe una tarea">
+        <button onclick="agregar()">Agregar</button>
+        <div id="lista"></div>
+    </div>
+
+<script>
+
+async function cargarTareas() {
+    const res = await fetch("http://localhost:3000/tareas", {
+        credentials: "include"
+    });
+
+    if (res.status === 401) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    const tareas = await res.json();
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    tareas.forEach(t => {
+        crearElemento(t.id, t.titulo, t.estado);
+    });
+}
+
+function crearElemento(id, titulo, estado) {
+    let contenedor = document.createElement("div");
+    contenedor.className = "tarea";
+
+    let check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = estado === 1;
+
+    let span = document.createElement("span");
+    span.textContent = titulo;
+
+    if (check.checked) {
+        span.style.textDecoration = "line-through";
+    }
+
+    check.onclick = async function () {
+        await fetch(`http://localhost:3000/tareas/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                titulo: span.textContent,
+                estado: check.checked ? 1 : 0
+            })
+        });
+
+        span.style.textDecoration = check.checked ? "line-through" : "none";
+    };
+
+    let btnEliminar = document.createElement("button");
+    btnEliminar.textContent = "Eliminar";
+    btnEliminar.className = "btn-peq";
+
+    btnEliminar.onclick = async function () {
+        await fetch(`http://localhost:3000/tareas/${id}`, {
+            method: "DELETE",
+            credentials: "include"
+        });
+        contenedor.remove();
+    };
+
+    contenedor.appendChild(check);
+    contenedor.appendChild(span);
+    contenedor.appendChild(btnEliminar);
+
+    document.getElementById("lista").appendChild(contenedor);
+}
+
+async function agregar() {
+    let texto = document.getElementById("texto").value;
+
+    if (texto === "") return;
+
+    await fetch("http://localhost:3000/tareas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+            titulo: texto,
+            estado: 0
+        })
+    });
+
+    document.getElementById("texto").value = "";
+    cargarTareas();
+}
+
+
+window.onload = cargarTareas;
+
+</script>
+
+</body>
+</html>

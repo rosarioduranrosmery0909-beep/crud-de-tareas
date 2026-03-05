@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tareas</title>
+</head>
+<body>
+    <h2>Mis Tareas</h2>
+    <button id="cerrarSesion">Cerrar Sesión</button>
+    <ul id="listaTareas"></ul>
+
+    <h3>Agregar Tarea</h3>
+    <form id="tareaForm">
+        <input type="text" id="titulo" placeholder="Título" required>
+        <input type="text" id="estado" placeholder="Estado" required>
+        <button type="submit">Agregar</button>
+    </form>
+
+    <script>
+        const listaTareas = document.getElementById('listaTareas');
+        const tareaForm = document.getElementById('tareaForm');
+        const cerrarSesion = document.getElementById('cerrarSesion');
+
+        async function cargarTareas() {
+            try {
+                const res = await fetch('http://localhost:3000/tareas', { credentials: 'include' });
+                if (!res.ok) {
+                    alert('Debes iniciar sesión');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const tareas = await res.json();
+                listaTareas.innerHTML = '';
+
+                tareas.forEach(t => {
+                    const li = document.createElement('li');
+
+                    const texto = document.createTextNode(t.titulo + ' - ' + t.estado + ' ');
+                    li.appendChild(texto);
+
+                    const btnEditar = document.createElement('button');
+                    btnEditar.textContent = 'Editar';
+                    btnEditar.onclick = () => editarTarea(t.id, t.titulo, t.estado);
+                    li.appendChild(btnEditar);
+
+                    const btnEliminar = document.createElement('button');
+                    btnEliminar.textContent = 'Eliminar';
+                    btnEliminar.onclick = () => eliminarTarea(t.id);
+                    li.appendChild(btnEliminar);
+
+                    listaTareas.appendChild(li);
+                });
+
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        cargarTareas();
+
+        tareaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('titulo').value;
+            const estado = document.getElementById('estado').value;
+
+            await fetch('http://localhost:3000/tareas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo, estado }),
+                credentials: 'include'
+            });
+
+            document.getElementById('titulo').value = '';
+            document.getElementById('estado').value = '';
+            cargarTareas();
+        });
+
+        function editarTarea(id, tituloViejo, estadoViejo) {
+            const nuevoTitulo = prompt('Nuevo título:', tituloViejo);
+            if (nuevoTitulo === null) return;
+            const nuevoEstado = prompt('Nuevo estado:', estadoViejo);
+            if (nuevoEstado === null) return;
+
+            fetch(`http://localhost:3000/tareas/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo: nuevoTitulo, estado: nuevoEstado }),
+                credentials: 'include'
+            }).then(() => cargarTareas());
+        }
+
+        function eliminarTarea(id) {
+            if (!confirm('¿Seguro que quieres eliminar esta tarea?')) return;
+
+            fetch(`http://localhost:3000/tareas/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            }).then(() => cargarTareas());
+        }
+
+        cerrarSesion.addEventListener('click', async () => {
+            await fetch('http://localhost:3000/logout', { method: 'POST', credentials: 'include' });
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>
