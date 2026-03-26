@@ -3,7 +3,7 @@ const app = express();
 const db = require('./database');
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
     res.send('Servidor de tareas funcionando');
