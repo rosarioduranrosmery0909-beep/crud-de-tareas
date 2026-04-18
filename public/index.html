@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Login y CRUD</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#d8ecff;
+    text-align:center;
+}
+
+.caja{
+    background:white;
+    width:300px;
+    margin:auto;
+    padding:15px;
+    border-radius:10px;
+    border:2px solid #a9d3ff;
+}
+
+input{
+    width:180px;
+    padding:5px;
+    margin:5px;
+    border:1px solid #99c9ff;
+    border-radius:5px;
+}
+
+button{
+    padding:5px 10px;
+    margin:3px;
+    background:#a9d3ff;
+    border:none;
+    border-radius:5px;
+}
+
+.tarea{
+    background:#e5f2ff;
+    margin-top:8px;
+    padding:5px;
+    border-radius:5px;
+    border:1px solid #bcdfff;
+}
+
+.btn-peq{
+    padding:2px 6px;
+    margin-left:5px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Iniciar Sesión</h2>
+
+<div class="caja" id="loginBox">
+    <input type="email" id="email" placeholder="Correo"><br>
+    <input type="password" id="password" placeholder="Contraseña"><br>
+    <button onclick="login()">Entrar</button>
+    <button onclick="registro()">Registrarme</button>
+    <p id="msg"></p>
+</div>
+
+<hr>
+
+<div id="crud" style="display:none;">
+    <h1>CRUD de Tareas</h1>
+
+    <div class="caja">
+        <input type="text" id="texto" placeholder="Escribe una tarea">
+        <button onclick="agregar()">Agregar</button>
+        <div id="lista"></div>
+    </div>
+</div>
+
+<script>
+// ===== LOGIN Y REGISTRO =====
+
+async function registro(){
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+    let msg = document.getElementById("msg");
+
+    let res = await fetch("/registro",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body:JSON.stringify({email,password})
+    });
+
+    let data = await res.json();
+    msg.innerText = data.mensaje || data.error;
+}
+
+async function login(){
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+    let msg = document.getElementById("msg");
+
+    let res = await fetch("/login",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        credentials:"include",
+        body:JSON.stringify({email,password})
+    });
+
+    let data = await res.json();
+
+    if(res.ok){
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("crud").style.display="block";
+        cargarTareas();
+    }else{
+        msg.innerText = data.error;
+    }
+}
+
+// ===== CRUD =====
+
+async function cargarTareas() {
+    const res = await fetch("/tareas");
+    const tareas = await res.json();
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    tareas.forEach(t => crearElemento(t.id, t.titulo, t.estado));
+}
+
+function crearElemento(id, titulo, estado) {
+    const lista = document.getElementById("lista");
+
+    let contenedor = document.createElement("div");
+    contenedor.className = "tarea";
+
+    let check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = estado === 1;
+
+    let span = document.createElement("span");
+    span.textContent = titulo;
+
+    if (check.checked) span.style.textDecoration = "line-through";
+
+    check.onclick = async () => {
+        await fetch(`/tareas/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                titulo: span.textContent,
+                estado: check.checked ? 1 : 0
+            })
+        });
+        span.style.textDecoration = check.checked ? "line-through" : "none";
+    };
+
+    let btnEliminar = document.createElement("button");
+    btnEliminar.textContent = "Eliminar";
+    btnEliminar.className = "btn-peq";
+    btnEliminar.onclick = async () => {
+        await fetch(`/tareas/${id}`, { method: "DELETE" });
+        contenedor.remove();
+    };
+
+    contenedor.append(check, span, btnEliminar);
+    lista.appendChild(contenedor);
+}
+
+async function agregar() {
+    let input = document.getElementById("texto");
+    let texto = input.value;
+    if (!texto) return;
+
+    await fetch("/tareas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ titulo: texto, estado: 0 })
+    });
+
+    input.value = "";
+    cargarTareas();
+}
+</script>

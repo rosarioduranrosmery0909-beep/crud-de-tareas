@@ -36,3 +36,4 @@ db.run(`
         password TEXT
     )
 `);
+module.exports = db;
