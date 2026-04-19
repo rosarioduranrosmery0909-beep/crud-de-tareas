@@ -2,32 +2,80 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>CRUD de Tareas</title>
+<title>Login y CRUD</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#d8ecff;
+    text-align:center;
+}
+
+.caja{
+    background:white;
+    width:320px;
+    margin:60px auto;
+    padding:20px;
+    border-radius:10px;
+    border:2px solid #a9d3ff;
+}
+
+input, select{
+    width:200px;
+    padding:6px;
+    margin:6px;
+    border:1px solid #99c9ff;
+    border-radius:5px;
+}
+
+button{
+    padding:6px 12px;
+    margin:4px;
+    background:#a9d3ff;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.tarea{
+    background:#e5f2ff;
+    margin-top:8px;
+    padding:6px;
+    border-radius:5px;
+    border:1px solid #bcdfff;
+}
+</style>
 </head>
+
 <body>
 
 <!-- ================= LOGIN ================= -->
-<div id="login">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Correo"><br><br>
-    <input type="password" id="password" placeholder="Contraseña"><br><br>
+<div class="caja" id="login">
+    <h2>Iniciar Sesión</h2>
+
+    <input type="email" id="email" placeholder="Correo"><br>
+    <input type="password" id="password" placeholder="Contraseña"><br>
+
     <button onclick="login()">Entrar</button>
     <button onclick="registro()">Registrarme</button>
+
     <p id="mensaje"></p>
 </div>
 
 <!-- ================= CRUD ================= -->
-<div id="crud" style="display:none;">
+<div class="caja" id="crud" style="display:none;">
     <h2>CRUD de Tareas</h2>
 
-    <input type="text" id="titulo" placeholder="Título tarea">
+    <input type="text" id="titulo" placeholder="Escribe una tarea"><br>
+
     <select id="estado">
-        <option>Pendiente</option>
-        <option>Completada</option>
-    </select>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Completada">Completada</option>
+    </select><br>
+
     <button onclick="crearTarea()">Agregar</button>
 
-    <ul id="lista"></ul>
+    <div id="lista"></div>
 </div>
 
 <script>
@@ -44,8 +92,8 @@ function login() {
     .then(res => res.json())
     .then(data => {
         if(data.mensaje){
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('crud').style.display = 'block';
+            login.style.display = 'none';
+            crud.style.display = 'block';
             cargarTareas();
         }else{
             mensaje.innerText = data.error;
@@ -74,10 +122,10 @@ function cargarTareas(){
         lista.innerHTML = '';
         tareas.forEach(t => {
             lista.innerHTML += `
-            <li>
+            <div class="tarea">
                 ${t.titulo} - ${t.estado}
-                <button onclick="eliminar(${t.id})">X</button>
-            </li>`;
+                <button onclick="eliminar(${t.id})">Eliminar</button>
+            </div>`;
         });
     });
 }
@@ -90,7 +138,10 @@ function crearTarea(){
             titulo: titulo.value,
             estado: estado.value
         })
-    }).then(() => cargarTareas());
+    }).then(() => {
+        titulo.value = '';
+        cargarTareas();
+    });
 }
 
 function eliminar(id){
