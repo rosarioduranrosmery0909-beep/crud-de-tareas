@@ -51,19 +51,24 @@ button{
 
 <!-- ================= LOGIN ================= -->
 <div class="caja" id="login">
+
     <h2>Iniciar Sesión</h2>
 
     <input type="email" id="email" placeholder="Correo"><br>
+
     <input type="password" id="password" placeholder="Contraseña"><br>
 
     <button onclick="login()">Entrar</button>
+
     <button onclick="registro()">Registrarme</button>
 
     <p id="mensaje"></p>
+
 </div>
 
 <!-- ================= CRUD ================= -->
 <div class="caja" id="crud" style="display:none;">
+
     <h2>CRUD de Tareas</h2>
 
     <input type="text" id="titulo" placeholder="Escribe una tarea"><br>
@@ -76,21 +81,26 @@ button{
     <button onclick="crearTarea()">Agregar</button>
 
     <div id="lista"></div>
+
 </div>
 
 <script>
+
 // ================= LOGIN =================
 function login() {
 
     const correo = document.getElementById("email").value;
-    const clave  = document.getElementById("password").value;
+
+    const clave = document.getElementById("password").value;
 
     fetch('/login', {
+
         method: 'POST',
-        credentials: 'include',
+
         headers: {
             'Content-Type': 'application/json'
         },
+
         body: JSON.stringify({
             email: correo,
             password: clave
@@ -120,14 +130,17 @@ function login() {
 function registro() {
 
     const correo = document.getElementById("email").value;
-    const clave  = document.getElementById("password").value;
+
+    const clave = document.getElementById("password").value;
 
     fetch('/registro', {
+
         method: 'POST',
-        credentials: 'include',
+
         headers: {
             'Content-Type': 'application/json'
         },
+
         body: JSON.stringify({
             email: correo,
             password: clave
@@ -139,16 +152,14 @@ function registro() {
     .then(data => {
 
         document.getElementById("mensaje").innerText =
-            data.mensaje || data.error;
+        data.mensaje || data.error;
     });
 }
 
 // ================= CARGAR TAREAS =================
 function cargarTareas() {
 
-    fetch('/tareas', {
-        credentials: 'include'
-    })
+    fetch('/tareas')
 
     .then(res => res.json())
 
@@ -163,6 +174,7 @@ function cargarTareas() {
             lista.innerHTML += `
             <div class="tarea">
                 ${t.titulo} - ${t.estado}
+
                 <button onclick="eliminar(${t.id})">
                     Eliminar
                 </button>
@@ -172,7 +184,7 @@ function cargarTareas() {
     });
 }
 
-// ================= CREAR TAREA =================
+// ================= CREAR =================
 function crearTarea() {
 
     const titulo = document.getElementById("titulo").value;
@@ -183,8 +195,6 @@ function crearTarea() {
 
         method: 'POST',
 
-        credentials: 'include',
-
         headers: {
             'Content-Type': 'application/json'
         },
@@ -193,7 +203,6 @@ function crearTarea() {
             titulo,
             estado
         })
-
     })
 
     .then(() => {
@@ -209,15 +218,15 @@ function eliminar(id) {
 
     fetch('/tareas/' + id, {
 
-        method: 'DELETE',
-
-        credentials: 'include'
+        method: 'DELETE'
     })
 
     .then(() => {
 
         cargarTareas();
     });
+}
+
 </script>
 
 </body>

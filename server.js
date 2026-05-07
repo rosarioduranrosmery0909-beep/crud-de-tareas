@@ -1,34 +1,35 @@
 const express = require('express');
 const path = require('path');
-const session = require('express-session');
 
 const app = express();
 const db = require('./database');
 
 app.use(express.json());
-
-app.use(session({
-    secret: 'crud-secret',
-    resave: false,
-    saveUninitialized: false
-}));
-
 app.use(express.static('public'));
+
+let usuarioLogueado = false;
 
 // ================= INDEX =================
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+    res.sendFile(
+        path.join(__dirname, 'public', 'index.html')
+    );
 });
 
 // ================= REGISTRO =================
 app.post('/registro', (req, res) => {
+
     const { email, password } = req.body;
 
     db.run(
         'INSERT INTO usuarios (email, password) VALUES (?, ?)',
         [email, password],
-        (err) => {
+
+        function(err) {
+
             if (err) {
+
                 return res.status(500).json({
                     error: 'Usuario ya existe'
                 });
@@ -43,27 +44,30 @@ app.post('/registro', (req, res) => {
 
 // ================= LOGIN =================
 app.post('/login', (req, res) => {
+
     const { email, password } = req.body;
 
     db.get(
         'SELECT * FROM usuarios WHERE email = ? AND password = ?',
         [email, password],
+
         (err, row) => {
 
             if (err) {
+
                 return res.status(500).json({
                     error: err.message
                 });
             }
 
             if (!row) {
+
                 return res.status(401).json({
                     error: 'Usuario no encontrado'
                 });
             }
 
-            // GUARDAR SESION
-            req.session.usuario = row.id;
+            usuarioLogueado = true;
 
             res.json({
                 mensaje: 'Login correcto'
@@ -72,10 +76,11 @@ app.post('/login', (req, res) => {
     );
 });
 
-// ================= MIDDLEWARE =================
-function verificarSesion(req, res, next) {
+// ================= PROTEGER RUTAS =================
+function proteger(req, res, next) {
 
-    if (!req.session.usuario) {
+    if (!usuarioLogueado) {
+
         return res.status(401).json({
             error: 'Debes iniciar sesión'
         });
@@ -87,31 +92,39 @@ function verificarSesion(req, res, next) {
 // ================= TAREAS =================
 
 // VER TAREAS
-app.get('/tareas', verificarSesion, (req, res) => {
+app.get('/tareas', proteger, (req, res) => {
 
-    db.all('SELECT * FROM tareas', [], (err, rows) => {
+    db.all(
+        'SELECT * FROM tareas',
+        [],
 
-        if (err) {
-            return res.status(500).json({
-                error: err.message
-            });
+        (err, rows) => {
+
+            if (err) {
+
+                return res.status(500).json({
+                    error: err.message
+                });
+            }
+
+            res.json(rows);
         }
-
-        res.json(rows);
-    });
+    );
 });
 
 // CREAR TAREA
-app.post('/tareas', verificarSesion, (req, res) => {
+app.post('/tareas', proteger, (req, res) => {
 
     const { titulo, estado } = req.body;
 
     db.run(
         'INSERT INTO tareas (titulo, estado) VALUES (?, ?)',
         [titulo, estado],
-        function (err) {
+
+        function(err) {
 
             if (err) {
+
                 return res.status(500).json({
                     error: err.message
                 });
@@ -124,18 +137,21 @@ app.post('/tareas', verificarSesion, (req, res) => {
     );
 });
 
-// ACTUALIZAR
-app.put('/tareas/:id', verificarSesion, (req, res) => {
+// ACTUALIZAR TAREA
+app.put('/tareas/:id', proteger, (req, res) => {
 
     const { id } = req.params;
+
     const { titulo, estado } = req.body;
 
     db.run(
         'UPDATE tareas SET titulo=?, estado=? WHERE id=?',
         [titulo, estado, id],
+
         (err) => {
 
             if (err) {
+
                 return res.status(500).json({
                     error: err.message
                 });
@@ -148,15 +164,19 @@ app.put('/tareas/:id', verificarSesion, (req, res) => {
     );
 });
 
-// ELIMINAR
-app.delete('/tareas/:id', verificarSesion, (req, res) => {
+// ELIMINAR TAREA
+app.delete('/tareas/:id', proteger, (req, res) => {
+
+    const { id } = req.params;
 
     db.run(
         'DELETE FROM tareas WHERE id=?',
-        req.params.id,
+        [id],
+
         (err) => {
 
             if (err) {
+
                 return res.status(500).json({
                     error: err.message
                 });
@@ -169,7 +189,28 @@ app.delete('/tareas/:id', verificarSesion, (req, res) => {
     );
 });
 
+// ================= BORRAR USUARIOS =================
+app.get('/borrar-usuarios', (req, res) => {
+
+    db.run(
+        'DELETE FROM usuarios',
+
+        (err) => {
+
+            if (err) {
+
+                return res.send(err.message);
+            }
+
+            res.send('Usuarios borrados');
+        }
+    );
+});
+
 // ================= SERVIDOR =================
 app.listen(3000, () => {
-    console.log('Servidor corriendo en http://localhost:3000');
+
+    console.log(
+        'Servidor corriendo en http://localhost:3000'
+    );
 });
