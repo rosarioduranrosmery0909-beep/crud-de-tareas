@@ -81,73 +81,143 @@ button{
 <script>
 // ================= LOGIN =================
 function login() {
+
+    const correo = document.getElementById("email").value;
+    const clave  = document.getElementById("password").value;
+
     fetch('/login', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-            email: email.value,
-            password: password.value
+            email: correo,
+            password: clave
         })
     })
+
     .then(res => res.json())
+
     .then(data => {
-        if(data.mensaje){
-            login.style.display = 'none';
-            crud.style.display = 'block';
+
+        if (data.mensaje) {
+
+            document.getElementById("login").style.display = "none";
+
+            document.getElementById("crud").style.display = "block";
+
             cargarTareas();
-        }else{
-            mensaje.innerText = data.error;
+
+        } else {
+
+            document.getElementById("mensaje").innerText = data.error;
         }
     });
 }
 
+// ================= REGISTRO =================
 function registro() {
+
+    const correo = document.getElementById("email").value;
+    const clave  = document.getElementById("password").value;
+
     fetch('/registro', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-            email: email.value,
-            password: password.value
+            email: correo,
+            password: clave
         })
     })
+
     .then(res => res.json())
-    .then(data => mensaje.innerText = data.mensaje || data.error);
+
+    .then(data => {
+
+        document.getElementById("mensaje").innerText =
+            data.mensaje || data.error;
+    });
 }
 
-// ================= CRUD =================
-function cargarTareas(){
-    fetch('/tareas')
+// ================= CARGAR TAREAS =================
+function cargarTareas() {
+
+    fetch('/tareas', {
+        credentials: 'include'
+    })
+
     .then(res => res.json())
+
     .then(tareas => {
+
+        const lista = document.getElementById("lista");
+
         lista.innerHTML = '';
+
         tareas.forEach(t => {
+
             lista.innerHTML += `
             <div class="tarea">
                 ${t.titulo} - ${t.estado}
-                <button onclick="eliminar(${t.id})">Eliminar</button>
-            </div>`;
+                <button onclick="eliminar(${t.id})">
+                    Eliminar
+                </button>
+            </div>
+            `;
         });
     });
 }
 
-function crearTarea(){
+// ================= CREAR TAREA =================
+function crearTarea() {
+
+    const titulo = document.getElementById("titulo").value;
+
+    const estado = document.getElementById("estado").value;
+
     fetch('/tareas', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
+
+        method: 'POST',
+
+        credentials: 'include',
+
+        headers: {
+            'Content-Type': 'application/json'
+        },
+
         body: JSON.stringify({
-            titulo: titulo.value,
-            estado: estado.value
+            titulo,
+            estado
         })
-    }).then(() => {
-        titulo.value = '';
+
+    })
+
+    .then(() => {
+
+        document.getElementById("titulo").value = '';
+
         cargarTareas();
     });
 }
 
-function eliminar(id){
-    fetch('/tareas/'+id, {method:'DELETE'})
-    .then(() => cargarTareas());
-}
+// ================= ELIMINAR =================
+function eliminar(id) {
+
+    fetch('/tareas/' + id, {
+
+        method: 'DELETE',
+
+        credentials: 'include'
+    })
+
+    .then(() => {
+
+        cargarTareas();
+    });
 </script>
 
 </body>
