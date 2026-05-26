@@ -96,7 +96,7 @@ function login() {
     fetch('/login', {
 
         method: 'POST',
-
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },
@@ -136,7 +136,7 @@ function registro() {
     fetch('/registro', {
 
         method: 'POST',
-
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },
@@ -159,9 +159,19 @@ function registro() {
 // ================= CARGAR TAREAS =================
 function cargarTareas() {
 
-    fetch('/tareas')
+    fetch('/tareas', {
+        credentials: 'include'
+    })
 
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) {
+            document.getElementById('mensaje').innerText = 'Debes iniciar sesión';
+            document.getElementById('login').style.display = 'block';
+            document.getElementById('crud').style.display = 'none';
+            throw new Error('No autorizado');
+        }
+        return res.json();
+    })
 
     .then(tareas => {
 
@@ -194,7 +204,7 @@ function crearTarea() {
     fetch('/tareas', {
 
         method: 'POST',
-
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },
@@ -218,7 +228,8 @@ function eliminar(id) {
 
     fetch('/tareas/' + id, {
 
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
     })
 
     .then(() => {

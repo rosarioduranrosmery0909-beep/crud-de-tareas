@@ -1,13 +1,22 @@
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 const db = require('./database');
 
 app.use(express.json());
 app.use(express.static('public'));
-
-let usuarioLogueado = false;
+app.use(session({
+    secret: 'mi-clave-secreta-123',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        httpOnly: true,
+        sameSite: 'lax'
+    }
+}));
 
 // ================= INDEX =================
 app.get('/', (req, res) => {
@@ -67,7 +76,10 @@ app.post('/login', (req, res) => {
                 });
             }
 
-            usuarioLogueado = true;
+            req.session.user = {
+                id: row.id,
+                email: row.email
+            };
 
             res.json({
                 mensaje: 'Login correcto'
@@ -76,10 +88,25 @@ app.post('/login', (req, res) => {
     );
 });
 
+app.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({
+                error: 'Error al cerrar sesión'
+            });
+        }
+
+        res.clearCookie('connect.sid');
+        res.json({
+            mensaje: 'Logout correcto'
+        });
+    });
+});
+
 // ================= PROTEGER RUTAS =================
 function proteger(req, res, next) {
 
-    if (!usuarioLogueado) {
+    if (!req.session.user) {
 
         return res.status(401).json({
             error: 'Debes iniciar sesión'
